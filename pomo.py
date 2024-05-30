@@ -27,8 +27,8 @@ def long_break(duration):
     print("Long break ended")
 
 def main():
-    work_duration = 1  # 25 minutes
-    short_break_duration = 1  # 5 minutes
+    work_duration = 25  # 25 minutes
+    short_break_duration = 5  # 5 minutes
     long_break_duration = 15  # 15 minutes
     session_before_long_break = 4
 
