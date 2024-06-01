@@ -1,39 +1,61 @@
 #!/usr/bin/env python3
 
+import tkinter as tk
+from tkinter import messagebox
 import time
+import threading
 
 def start_work_session():
+    global start_time
     start_time = time.time()
-    input("Press Enter to stop the work session ...")
+    work_button.config(state=tk.DISABLED)
+    stop_button.config(state=tk.NORMAL)
+    update_timer()
+
+def stop_work_session():
+    global end_time, work_duration
     end_time = time.time()
     work_duration = end_time - start_time
-    return work_duration
+    work_button.config(state=tk.NORMAL)
+    stop_button.config(state=tk.DISABLED)
+    break_duration = work_duration / 5
+    break_minutes = break_duration / 60
+    messagebox.showinfo("Break Time", f"Break Time : {break_minutes:.2f} minutes.")
+    start_timer(break_duration)
+
+def update_timer():
+    if work_button['state'] == tk.DISABLED:
+        elapsed_time = time.time() - start_time
+        minutes, seconds = divmod(int(elapsed_time), 60)
+        timer_label.config(text=f"{minutes:02d}:{seconds:02d}")
+        root.after(1000, update_timer)
 
 def start_timer(seconds):
-    while seconds > 0:
-        minutes,seconds_remaining = divmod(int(seconds), 60)
-        print(f"{minutes:02d}:{seconds_remaining:02d}", end="\r")
-        time.sleep(1)
-        seconds -= 1
-    print("Time's up !")
+    def countdown():
+        nonlocal seconds
+        while seconds > 0:
+            minutes, seconds_remaining = divmod(int(seconds), 60)
+            timer_label.config(text=f"{minutes:02d}:{seconds_remaining:02d}")
+            time.sleep(1)
+            seconds -= 1
+        timer_label.config(text="00:00")
+        messagebox.showinfo("Time's up", "Time's up")
 
-def main():
-    while True:
-        print("Work session started.")
-        work_duration = start_work_session()
-        work_minutes = work_duration / 60
-        print(f"Work session ended. Duration : {work_minutes:.2F} minutes.")
+    timer_thread = threading.Thread(target=countdown)
+    timer_thread.start()
 
-        break_duration = work_duration / 5
-        break_minutes = break_duration / 60
-        print(f"Break time : {break_minutes:.2f} minutes.")
+root = tk.Tk()
+root.title("Flowmodoro")
 
-        start_timer(break_duration)
+timer_label = tk.Label(root, text="00:00", font=("Helvetica", 48))
+timer_label.pack(pady=20)
 
-        user_imput = input("Start another session ? (y/n) ")
-        if user_imput.lower() != 'y':
-            break
+work_button = tk.Button(root, text="Start Work Session", command=start_work_session)
+work_button.pack(side=tk.LEFT, padx=20)
 
-if __name__ == "__main__":
-    main()
+stop_button = tk.Button(root, text="Stop Work Session", command=stop_work_session, state=tk.DISABLED)
+stop_button.pack(side=tk.RIGHT, padx=20)
+
+root.mainloop()
+
 
