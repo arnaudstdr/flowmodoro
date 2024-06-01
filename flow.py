@@ -11,7 +11,7 @@ def start_work_session():
 
 def start_timer(seconds):
     while seconds > 0:
-        minutes,seconds_remaining = divmod(seconds, 60)
+        minutes,seconds_remaining = divmod(int(seconds), 60)
         print(f"{minutes:02d}:{seconds_remaining:02d}", end="\r")
         time.sleep(1)
         seconds -= 1
