@@ -4,6 +4,14 @@ import tkinter as tk
 from tkinter import messagebox
 import time
 import threading
+import pygame
+
+#Initialize pygame mixer for playing sounds
+pygame.mixer.init()
+
+def play_sound(file_path):
+    pygame.mixer.music.load(file_path)
+    pygame.mixer.music.play()
 
 def start_work_session():
     global start_time
@@ -39,13 +47,14 @@ def start_timer(seconds):
             time.sleep(1)
             seconds -= 1
         timer_label.config(text="00:00")
+        play_sound('notification_sound.mp3')
         messagebox.showinfo("Time's up", "Time's up")
 
     timer_thread = threading.Thread(target=countdown)
     timer_thread.start()
 
 root = tk.Tk()
-root.title("Flowmodoro")
+root.title("FlowModoro")
 
 timer_label = tk.Label(root, text="00:00", font=("Helvetica", 48))
 timer_label.pack(pady=20)
