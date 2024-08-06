@@ -5,9 +5,15 @@ from tkinter import messagebox
 import time
 import threading
 import pygame
+import json
+from datetime import datetime
 
 #Initialize pygame mixer for playing sounds
 pygame.mixer.init()
+
+# Global variables
+session_counter = 0
+session_file = "sessions.json"
 
 def play_sound(file_path):
     pygame.mixer.music.load(file_path)
@@ -21,9 +27,11 @@ def start_work_session():
     update_timer()
 
 def stop_work_session():
-    global end_time, work_duration
+    global end_time, work_duration, session_counter
     end_time = time.time()
     work_duration = end_time - start_time
+    session_counter += 1
+    save_session(start_time, end_time, work_duration)
     work_button.config(state=tk.NORMAL)
     stop_button.config(state=tk.DISABLED)
     break_duration = work_duration / 5
@@ -53,6 +61,34 @@ def start_timer(seconds):
     timer_thread = threading.Thread(target=countdown)
     timer_thread.start()
 
+def save_session(start_time, end_time, duration):
+    session_data = {
+        "start_time": datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S'),
+        "end_time": datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S'),
+        "duration": duration
+    }
+    try:
+        with open(session_file, "r") as file:
+            sessions = json.load(file)
+    except FileNotFoundError:
+        sessions = []
+    sessions.append(session_data)
+    with open(session_file, "w") as file:
+        json.dump(sessions, file)
+
+def load_sessions():
+    try:
+        with open(session_file, "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []
+
+def show_history():
+    sessions = load_sessions()
+    history_text = "\n".join([f"Start: {s['start_time']}, End: {s['end_time']}, Duration: {s['duration']/60:.2f} minutes" for s in sessions])
+    messagebox.showinfo("Session History", history_text if history_text else "No sessions recorded yet.")
+
+
 root = tk.Tk()
 root.title("FlowModoro")
 
@@ -64,6 +100,9 @@ work_button.pack(side=tk.LEFT, padx=20)
 
 stop_button = tk.Button(root, text="Stop Work Session", command=stop_work_session, state=tk.DISABLED)
 stop_button.pack(side=tk.RIGHT, padx=20)
+
+history_button = tk.Button(root, text="View History", command=show_history)
+history_button.pack(pady=20)
 
 root.mainloop()
 
