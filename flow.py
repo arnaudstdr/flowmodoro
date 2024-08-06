@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, scrolledtext
 import time
 import threading
 import pygame
@@ -85,9 +85,17 @@ def load_sessions():
 
 def show_history():
     sessions = load_sessions()
-    history_text = "\n".join([f"Start: {s['start_time']}, End: {s['end_time']}, Duration: {s['duration']/60:.2f} minutes" for s in sessions])
-    messagebox.showinfo("Session History", history_text if history_text else "No sessions recorded yet.")
+    history_window = tk.Toplevel(root)
+    history_window.title("Session History")
 
+    text_area = scrolledtext.ScrolledText(history_window, wrap=tk.WORD, width=60, height=20)
+    text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+    for session in sessions:
+        session_info = f"Start: {session['start_time']}, End: {session['end_time']}, Duration: {session['duration'] / 60:.2f} minutes\n"
+        text_area.insert(tk.END, session_info)
+
+    text_area.config(state=tk.DISABLED)
 
 root = tk.Tk()
 root.title("FlowModoro")
