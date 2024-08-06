@@ -95,6 +95,7 @@ def show_history():
     for session in sessions:
         session_info = f"Start: {session['start_time']}, End: {session['end_time']}, Duration: {session['duration'] / 60:.2f} minutes\n"
         text_area.insert(tk.END, session_info)
+        text_area.insert(tk.END, '-'*60+ '\n')
 
     text_area.config(state=tk.DISABLED)
 
