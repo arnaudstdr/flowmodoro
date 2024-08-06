@@ -12,7 +12,7 @@ from datetime import datetime
 pygame.mixer.init()
 
 # Global variables
-session_counter = 0
+current_session_counter = 0
 session_file = "sessions.json"
 
 def play_sound(file_path):
@@ -20,17 +20,18 @@ def play_sound(file_path):
     pygame.mixer.music.play()
 
 def start_work_session():
-    global start_time
+    global start_time, current_session_counter
     start_time = time.time()
+    current_session_counter += 1
+    update_session_count()
     work_button.config(state=tk.DISABLED)
     stop_button.config(state=tk.NORMAL)
     update_timer()
 
 def stop_work_session():
-    global end_time, work_duration, session_counter
+    global end_time, work_duration
     end_time = time.time()
     work_duration = end_time - start_time
-    session_counter += 1
     save_session(start_time, end_time, work_duration)
     work_button.config(state=tk.NORMAL)
     stop_button.config(state=tk.DISABLED)
@@ -97,11 +98,17 @@ def show_history():
 
     text_area.config(state=tk.DISABLED)
 
+def update_session_count():
+    session_count_label.config(text=f"Current Sessions: {current_session_counter}")
+
 root = tk.Tk()
 root.title("FlowModoro")
 
 timer_label = tk.Label(root, text="00:00", font=("Helvetica", 48))
 timer_label.pack(pady=20)
+
+session_count_label = tk.Label(root, text=f"Current Session: {current_session_counter}", font=("Helvetica", 16))
+session_count_label.pack(pady=10)
 
 work_button = tk.Button(root, text="Start Work Session", command=start_work_session)
 work_button.pack(side=tk.LEFT, padx=20)
