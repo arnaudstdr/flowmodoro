@@ -6,7 +6,7 @@ import time
 import threading
 import pygame
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 #Initialize pygame mixer for playing sounds
 pygame.mixer.init()
@@ -63,10 +63,13 @@ def start_timer(seconds):
     timer_thread.start()
 
 def save_session(start_time, end_time, duration):
+    start_datetime =  datetime.fromtimestamp(start_time)
+    end_datetime = datetime.fromtimestamp(end_time)
     session_data = {
-        "start_time": datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S'),
-        "end_time": datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S'),
-        "duration": duration
+        "start_time": start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+        "end_time": end_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+        "duration": duration,
+        "week_number": start_datetime.strftime('%Y-%W')
     }
     try:
         with open(session_file, "r") as file:
@@ -99,6 +102,33 @@ def show_history():
 
     text_area.config(state=tk.DISABLED)
 
+def show_weekly_analysis():
+    sessions = load_sessions()
+    weekly_data = {}
+
+    for session in sessions:
+        week_number = session["week_number"]
+        duration = session["duration"]
+        if week_number not in weekly_data:
+            weekly_data[week_number] = {"session_count": 0, "total_duration": 0}
+        weekly_data[week_number]["session_count"] += 1
+        weekly_data[week_number]["total_duration"] += duration
+
+    analysis_window = tk.Toplevel(root)
+    analysis_window.title("Weekly Analysis")
+
+    text_area = scrolledtext.ScrolledText(analysis_window, wrap=tk.WORD, width=60, height=20)
+    text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+    for week, data in sorted(weekly_data.items()):
+        week_info = (f"Week : {week},"
+                     f"Sessions : {data['session_count']},"
+                     f"Total Duration : {data['total_duration'] / 3600:.2f} hours\n")
+        text_area.insert(tk.END, week_info)
+        text_area.insert(tk.END, '-'*60 + '\n')
+
+    text_area.config(state=tk.DISABLED)
+
 def update_session_count():
     session_count_label.config(text=f"Current Sessions: {current_session_counter}")
 
@@ -119,6 +149,9 @@ stop_button.pack(side=tk.RIGHT, padx=20)
 
 history_button = tk.Button(root, text="View History", command=show_history)
 history_button.pack(pady=20)
+
+analysis_button = tk.Button(root, text="Weekly Analysis", command=show_weekly_analysis)
+analysis_button.pack(pady=10)
 
 root.mainloop()
 
