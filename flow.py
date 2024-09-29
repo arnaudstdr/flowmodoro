@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import tkinter as tk
+from collections import defaultdict
 from tkinter import messagebox, scrolledtext
 import time
 import threading
 import pygame
 import json
 from datetime import datetime, timedelta
+import requests
 
 #Initialize pygame mixer for playing sounds
 pygame.mixer.init()
@@ -15,9 +17,27 @@ pygame.mixer.init()
 current_session_counter = 0
 session_file = "sessions.json"
 
+# pushhover
+user_key = "u4tks68bo8kd3pukj7tteu8g5pmwk6"
+api_token = "agrfhyvzkhr7sgbqa5xa11hihms1vv"
+
 def play_sound(file_path):
     pygame.mixer.music.load(file_path)
     pygame.mixer.music.play()
+
+def send_push_notification(title, message):
+    payload = {
+        "token": api_token,
+        "user": user_key,
+        "title": title,
+        "message": message,
+    }
+    response = response = requests.post("https://api.pushover.net/1/messages.json", data=payload)
+    if response.status_code == 200:
+        print("Notification envoyée avec succès.")
+    else:
+        print(f"Erreur lors de l'envoi de la notification : {response.status_code} - {response.text}")
+
 
 def start_work_session():
     global start_time, current_session_counter
@@ -57,6 +77,7 @@ def start_timer(seconds):
             seconds -= 1
         timer_label.config(text="00:00")
         play_sound('notification_sound.mp3')
+        send_push_notification("Flowmodoro", "Time's up !")
         messagebox.showinfo("Time's up", "Time's up")
 
     timer_thread = threading.Thread(target=countdown)
@@ -90,29 +111,44 @@ def load_sessions():
 def show_history():
     sessions = load_sessions()
     history_window = tk.Toplevel(root)
-    history_window.title("Session History")
+    history_window.title("Daily History")
 
     text_area = scrolledtext.ScrolledText(history_window, wrap=tk.WORD, width=60, height=20)
     text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
+    # Regrouper les sessions par date
+    sessions_by_date = defaultdict(list)
     for session in sessions:
-        session_info = f"Start: {session['start_time']}, End: {session['end_time']}, Duration: {session['duration'] / 60:.2f} minutes\n"
-        text_area.insert(tk.END, session_info)
-        text_area.insert(tk.END, '-'*60+ '\n')
+        # Extraire la date de début de la session
+        date = session['start_time'].split(' ')[0]
+        sessions_by_date[date].append(session)
+
+    # Générer le rapport pour chaque jour
+    for date, daily_sessions in sessions_by_date.items():
+        total_duration = sum(session['duration'] for session in daily_sessions)
+        num_sessions = len(daily_sessions)
+
+        # Afficher les statistiques journalières
+        date_info = (f"Date : {date}\n"
+                     f"Nombre de sessions : {num_sessions}\n"
+                     f"Durée totale : {total_duration / 3600:.2f} heures\n")
+        text_area.insert(tk.END, date_info)
+        text_area.insert(tk.END, '='*60 + '\n')
 
     text_area.config(state=tk.DISABLED)
 
 def show_weekly_analysis():
     sessions = load_sessions()
-    weekly_data = {}
+    weekly_data = defaultdict(lambda: {"session_count": 0, "total_duration": 0, "days": set()})
 
     for session in sessions:
         week_number = session["week_number"]
         duration = session["duration"]
-        if week_number not in weekly_data:
-            weekly_data[week_number] = {"session_count": 0, "total_duration": 0}
+        date = session['start_time'].split(' ')[0]
+
         weekly_data[week_number]["session_count"] += 1
         weekly_data[week_number]["total_duration"] += duration
+        weekly_data[week_number]["days"].add(date)
 
     analysis_window = tk.Toplevel(root)
     analysis_window.title("Weekly Analysis")
@@ -121,13 +157,18 @@ def show_weekly_analysis():
     text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
     for week, data in sorted(weekly_data.items()):
-        week_info = (f"Week : {week},"
-                     f"Sessions : {data['session_count']},"
-                     f"Total Duration : {data['total_duration'] / 3600:.2f} hours\n")
+        num_days = len(data["days"])
+        average_daily_duration = (data["total_duration"] / num_days) / 3600 if num_days > 0 else 0
+
+        week_info = (f"Semaine : {week}\n"
+                     f"Nombre de sessions : {data['session_count']}\n"
+                     f"Durée totale : {data['total_duration'] / 3600:.2f} heures\n"
+                     f"Moyenne de travail par jour : {average_daily_duration:.2f} heures\n")
         text_area.insert(tk.END, week_info)
         text_area.insert(tk.END, '-'*60 + '\n')
 
     text_area.config(state=tk.DISABLED)
+
 
 def update_session_count():
     session_count_label.config(text=f"Current Sessions: {current_session_counter}")
@@ -147,7 +188,7 @@ work_button.pack(side=tk.LEFT, padx=20)
 stop_button = tk.Button(root, text="Stop Work Session", command=stop_work_session, state=tk.DISABLED)
 stop_button.pack(side=tk.RIGHT, padx=20)
 
-history_button = tk.Button(root, text="View History", command=show_history)
+history_button = tk.Button(root, text="Daily History", command=show_history)
 history_button.pack(pady=20)
 
 analysis_button = tk.Button(root, text="Weekly Analysis", command=show_weekly_analysis)
