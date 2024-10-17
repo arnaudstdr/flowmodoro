@@ -2,13 +2,14 @@
 
 import tkinter as tk
 from collections import defaultdict
-from tkinter import messagebox, scrolledtext
+from tkinter import messagebox, scrolledtext, ttk
 import time
 import threading
 import pygame
 import json
 from datetime import datetime, timedelta
 import requests
+import matplotlib.pyplot as plt
 
 #Initialize pygame mixer for playing sounds
 pygame.mixer.init()
@@ -16,6 +17,7 @@ pygame.mixer.init()
 # Global variables
 current_session_counter = 0
 session_file = "sessions.json"
+categories = ["Formation", "Freelance", "Projets", "Perso", "KCS"]
 
 # pushhover
 user_key = "u4tks68bo8kd3pukj7tteu8g5pmwk6"
@@ -52,7 +54,8 @@ def stop_work_session():
     global end_time, work_duration
     end_time = time.time()
     work_duration = end_time - start_time
-    save_session(start_time, end_time, work_duration)
+    selected_category = category_combobox.get()
+    save_session(start_time, end_time, work_duration, selected_category)
     work_button.config(state=tk.NORMAL)
     stop_button.config(state=tk.DISABLED)
     break_duration = work_duration / 5
@@ -83,13 +86,14 @@ def start_timer(seconds):
     timer_thread = threading.Thread(target=countdown)
     timer_thread.start()
 
-def save_session(start_time, end_time, duration):
+def save_session(start_time, end_time, duration, category):
     start_datetime =  datetime.fromtimestamp(start_time)
     end_datetime = datetime.fromtimestamp(end_time)
     session_data = {
         "start_time": start_datetime.strftime('%Y-%m-%d %H:%M:%S'),
         "end_time": end_datetime.strftime('%Y-%m-%d %H:%M:%S'),
         "duration": duration,
+        "category": category,
         "week_number": start_datetime.strftime('%Y-%W')
     }
     try:
@@ -169,6 +173,33 @@ def show_weekly_analysis():
 
     text_area.config(state=tk.DISABLED)
 
+import matplotlib.pyplot as plt
+
+def show_category_analysis_graph():
+    sessions = load_sessions()
+
+    # Regrouper les sessions par catégorie
+    category_data = defaultdict(lambda: {"session_count": 0, "total_duration": 0})
+
+    for session in sessions:
+        category = session.get("category", "Unknown")
+        duration = session["duration"]
+        
+        # Mise à jour des données de la catégorie
+        category_data[category]["session_count"] += 1
+        category_data[category]["total_duration"] += duration
+
+    # Préparer les données pour le graphique
+    categories = list(category_data.keys())
+    total_hours = [data["total_duration"] / 3600 for data in category_data.values()]
+
+    # Créer un graphique à barres
+    plt.figure(figsize=(10, 6))
+    plt.bar(categories, total_hours, color='skyblue')
+    plt.xlabel('Catégories')
+    plt.ylabel('Heures totales')
+    plt.title('Temps total par catégorie')
+    plt.show()
 
 def update_session_count():
     session_count_label.config(text=f"Current Sessions: {current_session_counter}")
@@ -182,6 +213,13 @@ timer_label.pack(pady=20)
 session_count_label = tk.Label(root, text=f"Current Session: {current_session_counter}", font=("Helvetica", 16))
 session_count_label.pack(pady=10)
 
+category_label = tk.Label(root, text="Select Category:", font=("Helvetica", 12))
+category_label.pack(pady=10)
+
+category_combobox = ttk.Combobox(root, values=categories, state="readonly")
+category_combobox.set("Perso")  # Catégorie par défaut
+category_combobox.pack(pady=10)
+
 work_button = tk.Button(root, text="Start Work Session", command=start_work_session)
 work_button.pack(side=tk.LEFT, padx=20)
 
@@ -194,6 +232,7 @@ history_button.pack(pady=20)
 analysis_button = tk.Button(root, text="Weekly Analysis", command=show_weekly_analysis)
 analysis_button.pack(pady=10)
 
+category_graph_button = tk.Button(root, text="Show Category Graph", command=show_category_analysis_graph)
+category_graph_button.pack(pady=10)
+
 root.mainloop()
-
-
