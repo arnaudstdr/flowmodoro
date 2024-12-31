@@ -156,7 +156,7 @@ def add_task():
         messagebox.showwarning("Entrée vide", "Veuillez entrer une tâche.")
 
 # Chargement initial des tâches
-existing_tasks = load_tasks()
+existing_tasks = get_task_names()
 
 def update_billable_status(event):
     selected_task = task_combobox.get()
@@ -332,10 +332,10 @@ root.title("FlowModoro")
 timer_label = tk.Label(root, text="00:00", font=("Helvetica", 48))
 timer_label.pack(pady=20)
 
-session_count_label = tk.Label(root, text=f"Current Session: {current_session_counter}", font=("Helvetica", 16))
+session_count_label = tk.Label(root, text=f"Session Actuelle : {current_session_counter}", font=("Helvetica", 16))
 session_count_label.pack(pady=10)
 
-category_label = tk.Label(root, text="Select Category:", font=("Helvetica", 12))
+category_label = tk.Label(root, text="Selectionne une Catégorie :", font=("Helvetica", 12))
 category_label.pack(pady=10)
 
 category_combobox = ttk.Combobox(root, values=categories, state="readonly")
@@ -360,25 +360,32 @@ is_billable = tk.BooleanVar()
 billable_checkbox = tk.Checkbutton(root, text="Facturable", variable=is_billable)
 billable_checkbox.pack(pady=5)
 
-export_csv_button = tk.Button(root, text="Exporter en CSV", command=export_analysis_to_csv)
-export_csv_button.pack(pady=10)
+# Création des frames pour les deux colonnes
+left_frame = tk.Frame(root)
+left_frame.pack(side=tk.LEFT, padx=20, pady=10)
 
-work_button = tk.Button(root, text="Start Work Session", command=start_work_session)
-work_button.pack(side=tk.LEFT, padx=20)
+right_frame = tk.Frame(root)
+right_frame.pack(side=tk.RIGHT, padx=20, pady=10)
 
-stop_button = tk.Button(root, text="Stop Work Session", command=stop_work_session, state=tk.DISABLED)
-stop_button.pack(side=tk.RIGHT, padx=20)
+work_button = tk.Button(left_frame, text="Start Session", command=start_work_session)
+work_button.pack(pady=5)
 
-history_button = tk.Button(root, text="Daily History", command=show_history)
-history_button.pack(pady=20)
+stop_button = tk.Button(right_frame, text="Stop Session", command=stop_work_session, state=tk.DISABLED)
+stop_button.pack(pady=5)
 
-task_category_analysis_button = tk.Button(root, text="Analyze Tasks & Categories", command=analyze_time_by_task_and_category)
-task_category_analysis_button.pack(pady=10)
+history_button = tk.Button(left_frame, text="Historique Journalier", command=show_history)
+history_button.pack(pady=5)
 
-analysis_button = tk.Button(root, text="Weekly Analysis", command=show_weekly_analysis)
-analysis_button.pack(pady=10)
+analysis_button = tk.Button(right_frame, text="Historique de la Semaine", command=show_weekly_analysis)
+analysis_button.pack(pady=5)
 
-category_graph_button = tk.Button(root, text="Show Category Graph", command=show_category_analysis_graph)
+task_category_analysis_button = tk.Button(left_frame, text="Analyse Tâches & Catégories", command=analyze_time_by_task_and_category)
+task_category_analysis_button.pack(pady=5)
+
+export_csv_button = tk.Button(right_frame, text="Exporter en CSV", command=export_analysis_to_csv)
+export_csv_button.pack(pady=5)
+
+category_graph_button = tk.Button(root, text="Graphique", command=show_category_analysis_graph)
 category_graph_button.pack(pady=10)
 
 root.mainloop()
