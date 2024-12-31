@@ -19,7 +19,7 @@ pygame.mixer.init()
 # Global variables
 current_session_counter = 0
 session_file = "sessions.json"
-categories = ["Formation", "Freelance", "Projets", "Perso", "KCS"]
+categories = ["Formation", "Pro", "Perso", "Bénévolats"]
 task_file = "tasks.json"
 
 # pushhover
