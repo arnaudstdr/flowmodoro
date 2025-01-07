@@ -38,7 +38,7 @@ Avant de lancer le projet, assurez-vous d’avoir les éléments suivants instal
 ## Installation
 1. Clonez le projet depuis ce dépôt :
 ```bash
-git clone https://github.com/tonpseudo/flowmodoro.git
+git clone https://github.com/arnaudstdr/flowmodoro.git
 cd flowmodoro
 ```
 2. Installez lezs dépendances nécessaires :
