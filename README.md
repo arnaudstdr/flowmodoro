@@ -2,13 +2,28 @@
 
 FlowModoro est une application de bureau Python conçue pour optimiser ta productivité grâce à une gestion intelligente des sessions de travail et de pauses inspirée de la méthode Pomodoro. Avec un design intuitif, des statistiques détaillées et une intégration complète avec des notifications push, FlowModoro est l’outil idéal pour travailler efficacement tout en gardant un esprit léger et motivé.
 
+## Table des Matières
+
+- [🚀 FlowModoro - Gestion optimisée du temps avec méthode Pomodoro améliorée](#-flowmodoro---gestion-optimisée-du-temps-avec-méthode-pomodoro-améliorée)
+  - [Table des Matières](#table-des-matières)
+  - [🎯 Objectifs de FlowModoro](#-objectifs-de-flowmodoro)
+  - [🌟 Fonctionnalités clés](#-fonctionnalités-clés)
+    - [⏰ Gestion intelligente des sessions](#-gestion-intelligente-des-sessions)
+    - [📂 Gestion des catégories et des tâches](#-gestion-des-catégories-et-des-tâches)
+    - [📈 Analyse détaillée de ta productivité](#-analyse-détaillée-de-ta-productivité)
+    - [🎨 Interface utilisateur ergonomique](#-interface-utilisateur-ergonomique)
+  - [📸 Capture d'Écran](#-capture-décran)
+  - [🛠️ Installation](#️-installation)
+  - [📝 Utilisation](#-utilisation)
+  - [⚙️ Configuration](#️-configuration)
+  - [📝 Licence](#-licence)
 
 ## 🎯 Objectifs de FlowModoro
+
 - Maximiser ta productivité avec des sessions de travail structurées.
 - Faciliter le suivi du temps passé par tâches et catégories.
 - Améliorer l’équilibre travail-pause pour rester concentré.
 - Rendre agréable et ludique la gestion quotidienne du temps.
-
 
 ## 🌟 Fonctionnalités clés
 
@@ -37,19 +52,17 @@ FlowModoro est une application de bureau Python conçue pour optimiser ta produc
   - Superhero, Darkly, Flatly, Minty, Cyborg, Journal, Solar.
 - Intégration d’emojis et d’icônes pour une expérience visuelle ludique et agréable.
 
+## 📸 Capture d'Écran
 
-## 🛠️ Stack technique
-- **Python 3** pour le cœur de l’application.
-- Interface graphique basée sur **Tkinter** avec la librairie **ttkbootstrap**.
-- Gestion de fichiers de données en **JSON**JSON et export CSV intégré
-- Intégration de notifications via **API Pushover**.
-- Module audio via **pygame** pour les notifications sonores.
+![FlowModoro Interface](image.png)
 
+*Capture d'écran de l'interface principale de FlowModoro.*
 
-## 🧑‍💻 Installation et lancement
+## 🛠️ Installation
+
 1. Clone le dépôt :
 ```bash
-git clone https://github.com/ton-username/FlowModoro.git
+git clone https://github.com/arnaudstdr/flowmodoro.git
 cd FlowModoro
 ```
 
@@ -58,37 +71,30 @@ cd FlowModoro
 pip install -r requirements.txt
 ```
 
-3. Configure tes clés API (pour Pushover) dans un fichier api.py :
+3. Configure tes clés API (pour Pushover) dans un fichier `.env` :
 ```python
-KEY = "ta clé utilisateur Pushover"
-TOKEN = "ton token API Pushover"
+PUSHOVER_USER_KEY=your_user_key
+PUSHOVER_API_TOKEN=your_api_token
 ```
-
-4. Lance l’application :
+4. Lance l'application :
 ```bash
-python flow.py
+python main.py
 ```
 
+## 📝 Utilisation
+1. **Démarrer une session** : Clique sur le bouton "Start" pour commencer une session de travail.
+2. **Ajouter une tâche** : Utilise le menu déroulant pour sélectionner ou ajouter une nouvelle tâche.
+3. **Configurer les paramètres** : Accède aux paramètres via le menu "Settings" pour ajuster les notifications, le son, et le thème.
 
-## ⚙️ Paramètres et configuration
-
+## ⚙️ Configuration
 Tu peux ajuster les paramètres suivants dans la fenêtre dédiée accessible depuis le menu “Settings” :
 - Activation/Désactivation du son 🎶
 - Activation/Désactivation des notifications Push 📲
 - Choix du thème 🎨
 - Activation du rappel automatique en cas d’inactivité ⏳
 
-
-## 🚧 Évolutions futures
-
-Voici quelques idées prévues pour améliorer encore FlowModoro :
-- Intégration d’un système de badges ou récompenses 🎖️
-- Mode sombre automatique selon l’heure 🌙
-- Sauvegarde cloud automatique pour l’accès depuis plusieurs machines ☁️
-
 ## 📝 Licence
-
 Ce projet est distribué sous licence MIT. Voir LICENSE pour plus d’informations.
 
 
-Bonne productivité avec FlowModoro ! 🚀
+**Bonne productivité avec FlowModoro !** 🚀
