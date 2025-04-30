@@ -44,7 +44,7 @@ app_settings = load_settings()
 # Global variables
 current_session_counter = 0
 session_file = "sessions.json"
-categories = ["Formation", "Pro", "Perso"]
+categories = ["Formation 📚", "Pro 💼", "Perso🏠"]
 task_file = "tasks.json"
 
 # pushhover
@@ -168,7 +168,7 @@ def load_tasks():
 
 def get_task_names():
     tasks = load_tasks()
-    return [task["name"] for task in tasks]
+    return sorted([task["name"] for task in tasks])
 
 def save_task(task):
     tasks = load_tasks()
@@ -384,6 +384,15 @@ def show_category_analysis_graph():
 def update_session_count():
     session_count_label.config(text=f"Current Sessions: {current_session_counter}")
 
+    sessions = load_sessions()
+    today = datetime.now().strftime('%Y-%m-%d')
+    daily_duration = sum(session['duration'] for session in sessions if session['start_time'].startswith(today))
+    
+    hours, remainder = divmod(daily_duration, 3600)
+    minutes, _ = divmod(remainder, 60)
+
+    daily_hours_label.config(text=f"Today's work: {int(hours)}h {int(minutes)}m")
+
 root = ttkb.Window(themename=app_settings.get("theme", "superhero"))
 root.title("FlowModoro")
 
@@ -446,11 +455,11 @@ timer_label.pack(pady=20)
 session_count_label = ttkb.Label(main_frame, text=f"Current session : {current_session_counter}", font=("Segoe UI", 16, "bold"))
 session_count_label.pack(pady=10)
 
-category_label = ttkb.Label(main_frame, text="Select a category :", font=("Segoe UI", 12, "bold"))
-category_label.pack(pady=10)
+daily_hours_label = ttkb.Label(main_frame, text="Today's work: 0h 0m", font=("Segoe UI", 14, "bold"))
+daily_hours_label.pack(pady=5)
 
 category_combobox = ttkb.Combobox(main_frame, values=categories, state="readonly", bootstyle="info")
-category_combobox.set("Perso")  # Catégorie par défaut
+category_combobox.set("Select a category")  # Catégorie par défaut
 category_combobox.pack(pady=10)
 
 task_combobox = ttkb.Combobox(main_frame, values=existing_tasks, state="readonly", bootstyle="secondary")
@@ -459,19 +468,19 @@ task_combobox.pack(pady=10)
 
 is_billable = ttkb.BooleanVar()
 
-billable_checkbox = ttkb.Checkbutton(main_frame, text="Billable", variable=is_billable)
+billable_checkbox = ttkb.Checkbutton(main_frame, text="Billable 💰", variable=is_billable)
 billable_checkbox.pack(pady=5)
 
-task_label = ttkb.Label(main_frame, text="Add a task :", font=("Segoe UI", 12, "bold"))
+task_label = ttkb.Label(main_frame, text="Add a task ✅:", font=("Segoe UI", 12, "bold"))
 task_label.pack(pady=5)
 
 task_entry = ttkb.Entry(main_frame, font=("Segoe UI", 12))
 task_entry.pack(pady=5)
 
-add_task_button = ttkb.Button(main_frame, text="Add task", command=add_task, bootstyle="success")
+add_task_button = ttkb.Button(main_frame, text="✚ Add task", command=add_task, bootstyle="success")
 add_task_button.pack(pady=5)
 
-delete_task_button = ttkb.Button(main_frame, text="Delete selected task", command=delete_task, bootstyle="danger")
+delete_task_button = ttkb.Button(main_frame, text="❌ Delete selected task", command=delete_task, bootstyle="danger")
 delete_task_button.pack(pady=5)
 
 # Séparateur vertical entre les deux colonnes
@@ -488,10 +497,10 @@ left_frame.pack(side="left", padx=10)
 right_frame = ttkb.Frame(bottom_frame)
 right_frame.pack(side="left", padx=10)
 
-work_button = ttkb.Button(left_frame, text="Start Session", command=start_work_session, bootstyle="primary")
+work_button = ttkb.Button(left_frame, text="🚀 Start Session", command=start_work_session, bootstyle="primary")
 work_button.pack(pady=5)
 
-stop_button = ttkb.Button(right_frame, text="Stop Session", command=stop_work_session, state="disabled", bootstyle="warning")
+stop_button = ttkb.Button(right_frame, text="⏹️ Stop Session", command=stop_work_session, state="disabled", bootstyle="warning")
 stop_button.pack(pady=5)
 
 # history_button = ttkb.Button(left_frame, text="Daily history", command=show_history, bootstyle="info")
