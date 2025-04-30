@@ -1,5 +1,6 @@
-.venv
+venv/
 .idea
 sessions.json
 tasks.json
 api.py
+__pycache__
