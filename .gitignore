@@ -1,7 +1,7 @@
 venv/
-.idea/
 sessions.json
 tasks.json
 .env
 __pycache__
 flow.py
+.idea/
