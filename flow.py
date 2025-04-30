@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
-import tkinter as tk
+import ttkbootstrap as ttkb
+from ttkbootstrap.constants import *
+from ttkbootstrap.dialogs import Messagebox
+from tkinter import messagebox, scrolledtext, filedialog
 from collections import defaultdict
-from tkinter import messagebox, scrolledtext, ttk, filedialog
 import time
 import threading
 import pygame
@@ -13,8 +15,31 @@ import requests
 import matplotlib.pyplot as plt
 import api
 
-#Initialize pygame mixer for playing sounds
+# Paramètres globaux
+settings_file = "settings.json"
+
+session_active = False
+
 pygame.mixer.init()
+# Fonctions de gestion des paramètres
+def load_settings():
+    try:
+        with open(settings_file, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {
+            "sound_enabled": True,
+            "pushover_enabled": True,
+            "theme": "superhero",
+            "reminder_enabled": True
+        }
+
+def save_settings(settings):
+    with open(settings_file, "w") as f:
+        json.dump(settings, f, indent=2)
+
+# Charger les paramètres au démarrage
+app_settings = load_settings()
 
 # Global variables
 current_session_counter = 0
@@ -27,52 +52,60 @@ user_key = api.KEY
 api_token = api.TOKEN
 
 def play_sound(file_path):
-   pygame.mixer.music.load(file_path)
-   pygame.mixer.music.play()
+    if app_settings.get("sound_enabled", True):
+        pygame.mixer.music.load(file_path)
+        pygame.mixer.music.play()
 
 def send_push_notification(title, message):
-    payload = {
-        "token": api_token,
-        "user": user_key,
-        "title": title,
-        "message": message,
-    }
-    response = response = requests.post("https://api.pushover.net/1/messages.json", data=payload)
-    if response.status_code == 200:
-        print("Notification envoyée avec succès.")
-    else:
-        print(f"Erreur lors de l'envoi de la notification : {response.status_code} - {response.text}")
+    if app_settings.get("pushover_enabled", True):
+        payload = {
+            "token": api_token,
+            "user": user_key,
+            "title": title,
+            "message": message,
+        }
+        response = requests.post("https://api.pushover.net/1/messages.json", data=payload)
+        if response.status_code == 200:
+            print("Notification envoyée avec succès.")
+        else:
+            print(f"Erreur lors de l'envoi de la notification : {response.status_code} - {response.text}")
 
 
 def start_work_session():
-    global start_time, current_session_counter
+    global start_time, current_session_counter, session_active
     start_time = time.time()
     current_session_counter += 1
+    session_active = True  # Session en cours
     update_session_count()
-    work_button.config(state=tk.DISABLED)
-    stop_button.config(state=tk.NORMAL)
-    update_timer()
+    work_button.config(state=ttkb.DISABLED)
+    stop_button.config(state=ttkb.NORMAL)
+    update_timer()  # Premier appel explicite ici
+
 
 def stop_work_session():
-    global end_time, work_duration
+    global end_time, work_duration, session_active
     end_time = time.time()
     work_duration = end_time - start_time
+    session_active = False  # Fin de la session
     selected_category = category_combobox.get()
     selected_task = task_combobox.get()
     save_session(start_time, end_time, work_duration, selected_category, selected_task)
-    work_button.config(state=tk.NORMAL)
-    stop_button.config(state=tk.DISABLED)
+    update_status(f"Session saved : {selected_task} ({selected_category})")
+    work_button.config(state=ttkb.NORMAL)
+    stop_button.config(state=ttkb.DISABLED)
     break_duration = work_duration / 5
     break_minutes = break_duration / 60
     messagebox.showinfo("Break Time", f"Break Time : {break_minutes:.2f} minutes.")
     start_timer(break_duration)
 
 def update_timer():
-    if work_button['state'] == tk.DISABLED:
+    if session_active:  # Dépend explicitement de session_active
         elapsed_time = time.time() - start_time
         minutes, seconds = divmod(int(elapsed_time), 60)
         timer_label.config(text=f"{minutes:02d}:{seconds:02d}")
         root.after(1000, update_timer)
+    else:
+        timer_label.config(text="00:00")
 
 def start_timer(seconds):
     def countdown():
@@ -119,6 +152,10 @@ def load_sessions():
             return json.load(file)
     except FileNotFoundError:
         return []
+    
+def update_status(message):
+    status_label.config(text=message)
+    root.after(5000, lambda: status_label.config(text=""))
 
 # Tâchs
 def load_tasks():
@@ -150,22 +187,22 @@ def add_task():
     if task:
         save_task(task)
         task_combobox['values'] = get_task_names()
-        task_entry.delete(0, tk.END)
-        messagebox.showinfo("Tâche ajoutée", f"La tâche '{task}' a été ajoutée.")
+        task_entry.delete(0, ttkb.END)
+        update_status(f"Tâche '{task}' ajoutée.")
     else:
-        messagebox.showwarning("Entrée vide", "Veuillez entrer une tâche.")
+        update_status("Erreur : entrez une tâche avant d'ajouter.")
 
 def delete_task():
     selected_task = task_combobox.get()
     if not selected_task or selected_task == "Select a task":
-        messagebox.showwarning("Aucune tâche sélectionnée", "Veuillez sélectionner une tâche à supprimer.")
+        update_status("Error: no task selected.")
         return
 
     tasks = load_tasks()
     updated_tasks = [task for task in tasks if task["name"] != selected_task]
 
     if len(updated_tasks) == len(tasks):
-        messagebox.showinfo("Non trouvé", "La tâche sélectionnée n'a pas été trouvée.")
+        update_status("Task not found.")
         return
 
     with open(task_file, "w") as file:
@@ -173,7 +210,7 @@ def delete_task():
 
     task_combobox['values'] = get_task_names()
     task_combobox.set("Select a task")
-    messagebox.showinfo("Tâche supprimée", f"La tâche '{selected_task}' a été supprimée.")
+    update_status(f"Task '{selected_task}' deleted.")
 
 # Chargement initial des tâches
 existing_tasks = get_task_names()
@@ -205,19 +242,19 @@ def analyze_time_by_task_and_category():
             analysis_data[category][task]["billable"] += duration
 
     # Afficher les résultats dans une nouvelle fenêtre
-    analysis_window = tk.Toplevel(root)
+    analysis_window = ttkb.Toplevel(root)
     analysis_window.title("Analysis by Task and Category")
 
-    text_area = scrolledtext.ScrolledText(analysis_window, wrap=tk.WORD, width=60, height=20)
-    text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+    text_area = scrolledtext.ScrolledText(analysis_window, wrap=ttkb.WORD, width=60, height=20)
+    text_area.pack(padx=10, pady=10, fill=ttkb.BOTH, expand=True)
 
     for category, tasks in analysis_data.items():
-        text_area.insert(tk.END, f"Catégorie : {category}\n")
+        text_area.insert(ttkb.END, f"Catégorie : {category}\n")
         for task, data in tasks.items():
-            text_area.insert(tk.END, f"  - Tâche : {task} -> {data['time'] / 3600:.2f} heures, Facturable : {data['billable']/3600:.2f} heures\n")
-        text_area.insert(tk.END, "="*60 + "\n")
+            text_area.insert(ttkb.END, f"  - Tâche : {task} -> {data['time'] / 3600:.2f} heures, Facturable : {data['billable']/3600:.2f} heures\n")
+        text_area.insert(ttkb.END, "="*60 + "\n")
 
-    text_area.config(state=tk.DISABLED)
+    text_area.config(state=ttkb.DISABLED)
 
 def export_analysis_to_csv():
     sessions = load_sessions()
@@ -256,11 +293,11 @@ def export_analysis_to_csv():
 
 def show_history():
     sessions = load_sessions()
-    history_window = tk.Toplevel(root)
+    history_window = ttkb.Toplevel(root)
     history_window.title("Daily History")
 
-    text_area = scrolledtext.ScrolledText(history_window, wrap=tk.WORD, width=60, height=20)
-    text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+    text_area = scrolledtext.ScrolledText(history_window, wrap=ttkb.WORD, width=60, height=20)
+    text_area.pack(padx=10, pady=10, fill=ttkb.BOTH, expand=True)
 
     # Regrouper les sessions par date
     sessions_by_date = defaultdict(list)
@@ -279,10 +316,10 @@ def show_history():
         date_info = (f"Date : {date}\n"
                      f"Nombre de sessions : {num_sessions}\n"
                      f"Durée totale : {total_duration / 3600:.2f} heures\n")
-        text_area.insert(tk.END, date_info)
-        text_area.insert(tk.END, '='*60 + '\n')
+        text_area.insert(ttkb.END, date_info)
+        text_area.insert(ttkb.END, '='*60 + '\n')
 
-    text_area.config(state=tk.DISABLED)
+    text_area.config(state=ttkb.DISABLED)
 
 def show_weekly_analysis():
     sessions = load_sessions()
@@ -297,11 +334,11 @@ def show_weekly_analysis():
         weekly_data[week_number]["total_duration"] += duration
         weekly_data[week_number]["days"].add(date)
 
-    analysis_window = tk.Toplevel(root)
+    analysis_window = ttkb.Toplevel(root)
     analysis_window.title("Weekly Analysis")
 
-    text_area = scrolledtext.ScrolledText(analysis_window, wrap=tk.WORD, width=60, height=20)
-    text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+    text_area = scrolledtext.ScrolledText(analysis_window, wrap=ttkb.WORD, width=60, height=20)
+    text_area.pack(padx=10, pady=10, fill=ttkb.BOTH, expand=True)
 
     for week, data in sorted(weekly_data.items(), reverse=True):
         num_days = len(data["days"])
@@ -311,10 +348,10 @@ def show_weekly_analysis():
                      f"Nombre de sessions : {data['session_count']}\n"
                      f"Durée totale : {data['total_duration'] / 3600:.2f} heures\n"
                      f"Moyenne de travail par jour : {average_daily_duration:.2f} heures\n")
-        text_area.insert(tk.END, week_info)
-        text_area.insert(tk.END, '-'*60 + '\n')
+        text_area.insert(ttkb.END, week_info)
+        text_area.insert(ttkb.END, '-'*60 + '\n')
 
-    text_area.config(state=tk.DISABLED)
+    text_area.config(state=ttkb.DISABLED)
 
 import matplotlib.pyplot as plt
 
@@ -347,69 +384,137 @@ def show_category_analysis_graph():
 def update_session_count():
     session_count_label.config(text=f"Current Sessions: {current_session_counter}")
 
-root = tk.Tk()
+root = ttkb.Window(themename=app_settings.get("theme", "superhero"))
 root.title("FlowModoro")
 
-timer_label = tk.Label(root, text="00:00", font=("Helvetica", 48))
+# Main frame central pour tous les widgets
+main_frame = ttkb.Frame(root, padding=20)
+main_frame.pack(expand=True)
+
+status_label = ttkb.Label(root, text="", font=("Segoe UI", 10), anchor="w")
+status_label.pack(fill="x", side="bottom", padx=10, pady=5)
+
+# Ajout de la barre de menu Analysis et Settings
+menubar = ttkb.Menu(root)
+
+analysis_menu = ttkb.Menu(menubar, tearoff=0)
+analysis_menu.add_command(label="Daily history", command=show_history)
+analysis_menu.add_command(label="Weekly history", command=show_weekly_analysis)
+analysis_menu.add_command(label="Task & Category Analysis", command=analyze_time_by_task_and_category)
+analysis_menu.add_command(label="Graphics", command=show_category_analysis_graph)
+analysis_menu.add_command(label="Export as CSV", command=export_analysis_to_csv)
+menubar.add_cascade(label="Analysis", menu=analysis_menu)
+
+# Menu Settings
+def open_settings_window():
+    settings_window = ttkb.Toplevel(root)
+    settings_window.title("Settings")
+
+    sound_var = ttkb.BooleanVar(value=app_settings.get("sound_enabled", True))
+    pushover_var = ttkb.BooleanVar(value=app_settings.get("pushover_enabled", True))
+    theme_var = ttkb.StringVar(value=app_settings.get("theme", "superhero"))
+    reminder_var = ttkb.BooleanVar(value=app_settings.get("reminder_enabled", True))
+
+    ttkb.Checkbutton(settings_window, text="Enable notification sound", variable=sound_var).pack(anchor="w", padx=10, pady=5)
+    ttkb.Checkbutton(settings_window, text="Enable Pushover", variable=pushover_var).pack(anchor="w", padx=10, pady=5)
+    ttkb.Checkbutton(settings_window, text="Reminder if no session for 10 min", variable=reminder_var).pack(anchor="w", padx=10, pady=5)
+
+    ttkb.Label(settings_window, text="Thème").pack(anchor="w", padx=10, pady=5)
+    themes = ["superhero", "darkly", "flatly", "minty", "cyborg", "journal", "solar"]
+    ttkb.Combobox(settings_window, textvariable=theme_var, values=themes, state="readonly").pack(padx=10, pady=5)
+
+    def save_and_close():
+        app_settings["sound_enabled"] = sound_var.get()
+        app_settings["pushover_enabled"] = pushover_var.get()
+        app_settings["theme"] = theme_var.get()
+        app_settings["reminder_enabled"] = reminder_var.get()
+        save_settings(app_settings)
+        messagebox.showinfo("Settings", "Saved settings. Please restart the application for changes to take effect.")
+        settings_window.destroy()
+
+    ttkb.Button(settings_window, text="Save", command=save_and_close, bootstyle="success").pack(pady=10)
+
+settings_menu = ttkb.Menu(menubar, tearoff=0)
+settings_menu.add_command(label="Settings", command=open_settings_window)
+menubar.add_cascade(label="Settings", menu=settings_menu)
+
+root.config(menu=menubar)
+
+timer_label = ttkb.Label(main_frame, text="00:00", font=("Segoe UI", 48, "bold"))
 timer_label.pack(pady=20)
 
-session_count_label = tk.Label(root, text=f"Current session : {current_session_counter}", font=("Helvetica", 16))
+session_count_label = ttkb.Label(main_frame, text=f"Current session : {current_session_counter}", font=("Segoe UI", 16, "bold"))
 session_count_label.pack(pady=10)
 
-category_label = tk.Label(root, text="Select a category :", font=("Helvetica", 12))
+category_label = ttkb.Label(main_frame, text="Select a category :", font=("Segoe UI", 12, "bold"))
 category_label.pack(pady=10)
 
-category_combobox = ttk.Combobox(root, values=categories, state="readonly")
+category_combobox = ttkb.Combobox(main_frame, values=categories, state="readonly", bootstyle="info")
 category_combobox.set("Perso")  # Catégorie par défaut
 category_combobox.pack(pady=10)
 
-task_combobox = ttk.Combobox(root, values=existing_tasks, state="readonly")
+task_combobox = ttkb.Combobox(main_frame, values=existing_tasks, state="readonly", bootstyle="secondary")
 task_combobox.set("Select a task")  # Tâche par défaut
 task_combobox.pack(pady=10)
 
-is_billable = tk.BooleanVar()
+is_billable = ttkb.BooleanVar()
 
-billable_checkbox = tk.Checkbutton(root, text="Billable", variable=is_billable)
+billable_checkbox = ttkb.Checkbutton(main_frame, text="Billable", variable=is_billable)
 billable_checkbox.pack(pady=5)
 
-task_label = tk.Label(root, text="Add a task :", font=("Helvetica", 12))
+task_label = ttkb.Label(main_frame, text="Add a task :", font=("Segoe UI", 12, "bold"))
 task_label.pack(pady=5)
 
-task_entry = tk.Entry(root, font=("Helvetica", 12))
+task_entry = ttkb.Entry(main_frame, font=("Segoe UI", 12))
 task_entry.pack(pady=5)
 
-add_task_button = tk.Button(root, text="Add task", command=add_task)
+add_task_button = ttkb.Button(main_frame, text="Add task", command=add_task, bootstyle="success")
 add_task_button.pack(pady=5)
 
-delete_task_button = tk.Button(root, text="Delete selected task", command=delete_task)
+delete_task_button = ttkb.Button(main_frame, text="Delete selected task", command=delete_task, bootstyle="danger")
 delete_task_button.pack(pady=5)
 
-# Création des frames pour les deux colonnes
-left_frame = tk.Frame(root)
-left_frame.pack(side=tk.LEFT, padx=20, pady=10)
+# Séparateur vertical entre les deux colonnes
+separator = ttkb.Separator(main_frame, orient="vertical")
+separator.pack(side="left", fill="y", padx=10)
 
-right_frame = tk.Frame(root)
-right_frame.pack(side=tk.RIGHT, padx=20, pady=10)
+# Encapsuler les colonnes dans un bottom_frame
+bottom_frame = ttkb.Frame(main_frame)
+bottom_frame.pack(pady=10)
 
-work_button = tk.Button(left_frame, text="Start Session", command=start_work_session)
+left_frame = ttkb.Frame(bottom_frame)
+left_frame.pack(side="left", padx=10)
+
+right_frame = ttkb.Frame(bottom_frame)
+right_frame.pack(side="left", padx=10)
+
+work_button = ttkb.Button(left_frame, text="Start Session", command=start_work_session, bootstyle="primary")
 work_button.pack(pady=5)
 
-stop_button = tk.Button(right_frame, text="Stop Session", command=stop_work_session, state=tk.DISABLED)
+stop_button = ttkb.Button(right_frame, text="Stop Session", command=stop_work_session, state="disabled", bootstyle="warning")
 stop_button.pack(pady=5)
 
-history_button = tk.Button(left_frame, text="Daily history", command=show_history)
-history_button.pack(pady=5)
+# history_button = ttkb.Button(left_frame, text="Daily history", command=show_history, bootstyle="info")
+# history_button.pack(pady=5)
+#
+# analysis_button = ttkb.Button(right_frame, text="Weekly history", command=show_weekly_analysis, bootstyle="info")
+# analysis_button.pack(pady=5)
+#
+# task_category_analysis_button = ttkb.Button(left_frame, text="Task & Category Analysis", command=analyze_time_by_task_and_category, bootstyle="secondary")
+# task_category_analysis_button.pack(pady=5)
+#
+# export_csv_button = ttkb.Button(right_frame, text="Export as CSV", command=export_analysis_to_csv, bootstyle="secondary")
+# export_csv_button.pack(pady=5)
 
-analysis_button = tk.Button(right_frame, text="Weekly history", command=show_weekly_analysis)
-analysis_button.pack(pady=5)
+# category_graph_button = ttkb.Button(root, text="Graphics", command=show_category_analysis_graph, bootstyle="dark")
+# category_graph_button.pack(pady=10)
 
-task_category_analysis_button = tk.Button(left_frame, text="Task & Category Analysis", command=analyze_time_by_task_and_category)
-task_category_analysis_button.pack(pady=5)
+# Rappel d'inactivité si activé
+def check_for_inactivity():
+    if work_button['state'] == ttkb.NORMAL and app_settings.get("reminder_enabled", True):
+        send_push_notification("Flowmodoro", "N'oubliez pas de démarrer une session !")
+    root.after(600000, check_for_inactivity)  # 10 minutes
 
-export_csv_button = tk.Button(right_frame, text="Export as CSV", command=export_analysis_to_csv)
-export_csv_button.pack(pady=5)
-
-category_graph_button = tk.Button(root, text="Graphics", command=show_category_analysis_graph)
-category_graph_button.pack(pady=10)
+check_for_inactivity()
 
 root.mainloop()
