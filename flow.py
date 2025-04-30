@@ -13,7 +13,12 @@ import csv
 from datetime import datetime, timedelta
 import requests
 import matplotlib.pyplot as plt
-import api
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+PUSHOVER_USER_KEY = os.getenv('PUSHOVER_USER_KEY')
+PUSHOVER_API_TOKEN = os.getenv('PUSHOVER_API_TOKEN')
 
 # Paramètres globaux
 settings_file = "settings.json"
@@ -48,8 +53,8 @@ categories = ["Formation 📚", "Pro 💼", "Perso🏠"]
 task_file = "tasks.json"
 
 # pushhover
-user_key = api.KEY
-api_token = api.TOKEN
+# user_key = api.KEY
+# api_token = api.TOKEN
 
 def play_sound(file_path):
     if app_settings.get("sound_enabled", True):
@@ -59,8 +64,8 @@ def play_sound(file_path):
 def send_push_notification(title, message):
     if app_settings.get("pushover_enabled", True):
         payload = {
-            "token": api_token,
-            "user": user_key,
+            "token": PUSHOVER_API_TOKEN,
+            "user": PUSHOVER_USER_KEY,
             "title": title,
             "message": message,
         }

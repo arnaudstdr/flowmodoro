@@ -1,6 +1,8 @@
-streamlit
+dotenv
 matplotlib
 pandas
 numpy
 pillow
 pygame
+streamlit
+ttkbootstrap
