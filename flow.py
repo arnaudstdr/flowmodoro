@@ -155,6 +155,26 @@ def add_task():
     else:
         messagebox.showwarning("Entrée vide", "Veuillez entrer une tâche.")
 
+def delete_task():
+    selected_task = task_combobox.get()
+    if not selected_task or selected_task == "Select a task":
+        messagebox.showwarning("Aucune tâche sélectionnée", "Veuillez sélectionner une tâche à supprimer.")
+        return
+
+    tasks = load_tasks()
+    updated_tasks = [task for task in tasks if task["name"] != selected_task]
+
+    if len(updated_tasks) == len(tasks):
+        messagebox.showinfo("Non trouvé", "La tâche sélectionnée n'a pas été trouvée.")
+        return
+
+    with open(task_file, "w") as file:
+        json.dump(updated_tasks, file, indent=2)
+
+    task_combobox['values'] = get_task_names()
+    task_combobox.set("Select a task")
+    messagebox.showinfo("Tâche supprimée", f"La tâche '{selected_task}' a été supprimée.")
+
 # Chargement initial des tâches
 existing_tasks = get_task_names()
 
@@ -250,7 +270,8 @@ def show_history():
         sessions_by_date[date].append(session)
 
     # Générer le rapport pour chaque jour
-    for date, daily_sessions in sessions_by_date.items():
+    for date in sorted(sessions_by_date.keys(), reverse=True):
+        daily_sessions = sessions_by_date[date]
         total_duration = sum(session['duration'] for session in daily_sessions)
         num_sessions = len(daily_sessions)
 
@@ -282,7 +303,7 @@ def show_weekly_analysis():
     text_area = scrolledtext.ScrolledText(analysis_window, wrap=tk.WORD, width=60, height=20)
     text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
-    for week, data in sorted(weekly_data.items()):
+    for week, data in sorted(weekly_data.items(), reverse=True):
         num_days = len(data["days"])
         average_daily_duration = (data["total_duration"] / num_days) / 3600 if num_days > 0 else 0
 
@@ -332,33 +353,36 @@ root.title("FlowModoro")
 timer_label = tk.Label(root, text="00:00", font=("Helvetica", 48))
 timer_label.pack(pady=20)
 
-session_count_label = tk.Label(root, text=f"Session Actuelle : {current_session_counter}", font=("Helvetica", 16))
+session_count_label = tk.Label(root, text=f"Current session : {current_session_counter}", font=("Helvetica", 16))
 session_count_label.pack(pady=10)
 
-category_label = tk.Label(root, text="Selectionne une Catégorie :", font=("Helvetica", 12))
+category_label = tk.Label(root, text="Select a category :", font=("Helvetica", 12))
 category_label.pack(pady=10)
 
 category_combobox = ttk.Combobox(root, values=categories, state="readonly")
 category_combobox.set("Perso")  # Catégorie par défaut
 category_combobox.pack(pady=10)
 
-task_label = tk.Label(root, text="Ajouter une tâche :", font=("Helvetica", 12))
+task_combobox = ttk.Combobox(root, values=existing_tasks, state="readonly")
+task_combobox.set("Select a task")  # Tâche par défaut
+task_combobox.pack(pady=10)
+
+is_billable = tk.BooleanVar()
+
+billable_checkbox = tk.Checkbutton(root, text="Billable", variable=is_billable)
+billable_checkbox.pack(pady=5)
+
+task_label = tk.Label(root, text="Add a task :", font=("Helvetica", 12))
 task_label.pack(pady=5)
 
 task_entry = tk.Entry(root, font=("Helvetica", 12))
 task_entry.pack(pady=5)
 
-add_task_button = tk.Button(root, text="Ajouter tâche", command=add_task)
+add_task_button = tk.Button(root, text="Add task", command=add_task)
 add_task_button.pack(pady=5)
 
-task_combobox = ttk.Combobox(root, values=existing_tasks, state="readonly")
-task_combobox.set("Sélectionnez une tâche")  # Tâche par défaut
-task_combobox.pack(pady=10)
-
-is_billable = tk.BooleanVar()
-
-billable_checkbox = tk.Checkbutton(root, text="Facturable", variable=is_billable)
-billable_checkbox.pack(pady=5)
+delete_task_button = tk.Button(root, text="Delete selected task", command=delete_task)
+delete_task_button.pack(pady=5)
 
 # Création des frames pour les deux colonnes
 left_frame = tk.Frame(root)
@@ -373,19 +397,19 @@ work_button.pack(pady=5)
 stop_button = tk.Button(right_frame, text="Stop Session", command=stop_work_session, state=tk.DISABLED)
 stop_button.pack(pady=5)
 
-history_button = tk.Button(left_frame, text="Historique Journalier", command=show_history)
+history_button = tk.Button(left_frame, text="Daily history", command=show_history)
 history_button.pack(pady=5)
 
-analysis_button = tk.Button(right_frame, text="Historique de la Semaine", command=show_weekly_analysis)
+analysis_button = tk.Button(right_frame, text="Weekly history", command=show_weekly_analysis)
 analysis_button.pack(pady=5)
 
-task_category_analysis_button = tk.Button(left_frame, text="Analyse Tâches & Catégories", command=analyze_time_by_task_and_category)
+task_category_analysis_button = tk.Button(left_frame, text="Task & Category Analysis", command=analyze_time_by_task_and_category)
 task_category_analysis_button.pack(pady=5)
 
-export_csv_button = tk.Button(right_frame, text="Exporter en CSV", command=export_analysis_to_csv)
+export_csv_button = tk.Button(right_frame, text="Export as CSV", command=export_analysis_to_csv)
 export_csv_button.pack(pady=5)
 
-category_graph_button = tk.Button(root, text="Graphique", command=show_category_analysis_graph)
+category_graph_button = tk.Button(root, text="Graphics", command=show_category_analysis_graph)
 category_graph_button.pack(pady=10)
 
 root.mainloop()
