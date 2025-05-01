@@ -4,5 +4,6 @@ pandas
 numpy
 pillow
 pygame
+rumps
 streamlit
 ttkbootstrap
