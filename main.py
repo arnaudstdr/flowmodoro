@@ -63,13 +63,6 @@ class FlowModoroBar(rumps.App):
         else:
             self.title = "00:00"
 
-    @rumps.clicked("About FlowModoro")
-    def show_about(self, _):
-        rumps.alert("FlowModoro Menu Bar Timer\nSynchronised with the main app.")
-
-    @rumps.clicked("Quit Menu Bar")
-    def quit_app(self, _):
-        rumps.quit_application()
 
 def start_work_session():
     global start_time, current_session_counter, session_active
@@ -125,8 +118,8 @@ def start_timer(seconds):
         if BREAK_FILE.exists():
             BREAK_FILE.unlink()
         play_sound('notification_sound.mp3', app_settings)
-        send_push_notification("Flowmodoro", "Time's up !", app_settings)
-        messagebox.showinfo("Time's up", "Time's up")
+        send_push_notification("Flowmodoro", "Fin de la pause ! On y retourne 💪", app_settings)
+        messagebox.showinfo("Time's up", "Fin de la pause ! On y retourne 💪")
 
     timer_thread = threading.Thread(target=countdown)
     timer_thread.start()
