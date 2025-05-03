@@ -12,13 +12,15 @@ import time
 import threading
 import pygame
 from datetime import datetime
-import rumps
 import subprocess
 from pathlib import Path
+
 TIMER_FILE = Path.home() / ".flowmodoro_timer"
+BREAK_FILE = Path.home() / ".flowmodoro_break_timer"
+
 # Handle menu bar subprocess so we can terminate it when GUI closes
 menu_bar_process = None
-BREAK_FILE = Path.home() / ".flowmodoro_break_timer"
+
 from src.config import app_settings, categories, existing_tasks
 from src.utils import load_settings, play_sound, send_push_notification
 from src.tasks import get_task_names, add_task, delete_task
@@ -33,36 +35,6 @@ app_settings = load_settings()
 current_session_counter = 0
 session_active = False
 pygame.mixer.init()
-
-# macOS menu bar timer integration
-class FlowModoroBar(rumps.App):
-    def __init__(self):
-        super().__init__("⏱️ Flow")
-        self.title = "00:00"
-        # Update every second
-        self.timer = rumps.Timer(self.refresh, 1)
-        self.timer.start()
-
-    def refresh(self, _):
-        # If a break timer is active, show countdown
-        if BREAK_FILE.exists():
-            end_ts = float(BREAK_FILE.read_text())
-            remaining = end_ts - time.time()
-            if remaining > 0:
-                m, s = divmod(int(remaining), 60)
-                self.title = f"{m:02d}:{s:02d}"
-            else:
-                BREAK_FILE.unlink()
-                self.title = "00:00"
-        # Otherwise if work session active, show elapsed
-        elif TIMER_FILE.exists():
-            start_ts = float(TIMER_FILE.read_text())
-            elapsed = time.time() - start_ts
-            m, s = divmod(int(elapsed), 60)
-            self.title = f"{m:02d}:{s:02d}"
-        else:
-            self.title = "00:00"
-
 
 def start_work_session():
     global start_time, current_session_counter, session_active
@@ -230,7 +202,6 @@ def check_for_inactivity():
 
 check_for_inactivity()
 
-
 # Clean up menu bar process and timer file when GUI is closed
 def on_app_close():
     """Clean up menu bar process and timer file when GUI is closed."""
@@ -244,13 +215,9 @@ def on_app_close():
         BREAK_FILE.unlink()
     root.destroy()
 
-
 if __name__ == "__main__":
-    if "--menu-bar" in sys.argv:
-        FlowModoroBar().run()
-    else:
-        if sys.platform == "darwin":
-            menu_bar_process = subprocess.Popen([sys.executable, __file__, "--menu-bar"])
-        # When the user closes the main window, clean up the menu bar process
-        root.protocol("WM_DELETE_WINDOW", on_app_close)
-        root.mainloop()
+    if sys.platform == "darwin":
+        menu_bar_process = subprocess.Popen([sys.executable, "src/menu_bar.py"])
+    # When the user closes the main window, clean up the menu bar process
+    root.protocol("WM_DELETE_WINDOW", on_app_close)
+    root.mainloop()
