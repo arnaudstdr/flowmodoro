@@ -1,6 +1,11 @@
 # 🚀 FlowModoro - Gestion optimisée du temps avec méthode Pomodoro améliorée
 
-FlowModoro est une application de bureau Python conçue pour optimiser ta productivité grâce à une gestion intelligente des sessions de travail et de pauses inspirée de la méthode Pomodoro. Avec un design intuitif, des statistiques détaillées et une intégration complète avec des notifications push, FlowModoro est l’outil idéal pour travailler efficacement tout en gardant un esprit léger et motivé.
+<!-- Badges -->
+<p align="left">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="Licence MIT"></a>
+  <img src="https://img.shields.io/badge/python-3.8%2B-blue.svg" alt="Python 3.8+">
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey" alt="Plateformes">
+  <img src="https://img.shields.io/badge/statut-actif-brightgreen" alt="Statut du projet">
 
 ## Table des Matières
 
