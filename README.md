@@ -6,6 +6,8 @@
   <img src="https://img.shields.io/badge/python-3.8%2B-blue.svg" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey" alt="Plateformes">
   <img src="https://img.shields.io/badge/statut-actif-brightgreen" alt="Statut du projet">
+  <img src="https://img.shields.io/badge/Dockerfile-available-blue?logo=docker" alt="Dockerfile disponible">
+</p>
 
 ## Table des Matières
 
@@ -19,6 +21,8 @@
     - [🎨 Interface utilisateur ergonomique](#-interface-utilisateur-ergonomique)
   - [📸 Capture d'Écran](#-capture-décran)
   - [🛠️ Installation](#️-installation)
+    - [Option 1 : Installation classique (environnement Python)](#option-1--installation-classique-environnement-python)
+    - [Option 2 : Utilisation avec Docker](#option-2--utilisation-avec-docker)
   - [📝 Utilisation](#-utilisation)
   - [⚙️ Configuration](#️-configuration)
   - [📝 Licence](#-licence)
@@ -65,10 +69,12 @@
 
 ## 🛠️ Installation
 
+### Option 1 : Installation classique (environnement Python)
+
 1. Clone le dépôt :
 ```bash
 git clone https://github.com/arnaudstdr/flowmodoro.git
-cd FlowModoro
+cd flowmodoro
 ```
 
 2. Installe les dépendances :
@@ -77,14 +83,42 @@ pip install -r requirements.txt
 ```
 
 3. Configure tes clés API (pour Pushover) dans un fichier `.env` :
-```python
+```env
 PUSHOVER_USER_KEY=your_user_key
 PUSHOVER_API_TOKEN=your_api_token
 ```
+
 4. Lance l'application :
 ```bash
 python main.py
 ```
+
+---
+
+### Option 2 : Utilisation avec Docker
+
+1. Clone le dépôt :
+```bash
+git clone https://github.com/arnaudstdr/flowmodoro.git
+cd flowmodoro
+```
+
+2. Construis l'image Docker :
+```bash
+docker build -t flowmodoro .
+```
+
+3. Lance l'application dans un conteneur :
+```bash
+docker run --rm -it \
+  -e PUSHOVER_USER_KEY=your_user_key \
+  -e PUSHOVER_API_TOKEN=your_api_token \
+  flowmodoro
+```
+
+> Remplace `your_user_key` et `your_api_token` par tes propres clés Pushover.
+
+---
 
 ## 📝 Utilisation
 1. **Démarrer une session** : Clique sur le bouton "Start" pour commencer une session de travail.
