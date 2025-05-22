@@ -8,6 +8,15 @@ from pathlib import Path
 TIMER_FILE = Path.home() / ".flowmodoro_timer"
 BREAK_FILE = Path.home() / ".flowmodoro_break_timer"
 
+def format_timer_display(total_seconds):
+    if total_seconds >= 3600:
+        hours, remainder = divmod(int(total_seconds), 3600)
+        minutes = remainder // 60
+        return f"{hours:02d}:{minutes:02d}"
+    else:
+        minutes, seconds = divmod(int(total_seconds), 60)
+        return f"{minutes:02d}:{seconds:02d}"
+
 class FlowModoroBar(rumps.App):
     def __init__(self):
         super().__init__("⏱️ Flow")
@@ -22,8 +31,7 @@ class FlowModoroBar(rumps.App):
             end_ts = float(BREAK_FILE.read_text())
             remaining = end_ts - time.time()
             if remaining > 0:
-                m, s = divmod(int(remaining), 60)
-                self.title = f"{m:02d}:{s:02d}"
+                self.title = format_timer_display(remaining)
             else:
                 BREAK_FILE.unlink()
                 self.title = "00:00"
@@ -31,8 +39,7 @@ class FlowModoroBar(rumps.App):
         elif TIMER_FILE.exists():
             start_ts = float(TIMER_FILE.read_text())
             elapsed = time.time() - start_ts
-            m, s = divmod(int(elapsed), 60)
-            self.title = f"{m:02d}:{s:02d}"
+            self.title = format_timer_display(elapsed)
         else:
             self.title = "00:00"
 

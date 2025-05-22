@@ -65,11 +65,19 @@ def stop_work_session():
     messagebox.showinfo("Break Time", f"Break Time : {break_minutes:.2f} minutes.")
     start_timer(break_duration)
 
+def format_timer_display(total_seconds):
+    if total_seconds >= 3600:
+        hours, remainder = divmod(int(total_seconds), 3600)
+        minutes = remainder // 60
+        return f"{hours:02d}:{minutes:02d}"
+    else:
+        minutes, seconds = divmod(int(total_seconds), 60)
+        return f"{minutes:02d}:{seconds:02d}"
+
 def update_timer():
     if session_active:  # Dépend explicitement de session_active
         elapsed_time = time.time() - start_time
-        minutes, seconds = divmod(int(elapsed_time), 60)
-        timer_label.config(text=f"{minutes:02d}:{seconds:02d}")
+        timer_label.config(text=format_timer_display(elapsed_time))
         root.after(1000, update_timer)
     else:
         timer_label.config(text="00:00")
@@ -81,8 +89,7 @@ def start_timer(seconds):
     def countdown():
         nonlocal seconds
         while seconds > 0:
-            minutes, seconds_remaining = divmod(int(seconds), 60)
-            timer_label.config(text=f"{minutes:02d}:{seconds_remaining:02d}")
+            timer_label.config(text=format_timer_display(seconds))
             time.sleep(1)
             seconds -= 1
         timer_label.config(text="00:00")
