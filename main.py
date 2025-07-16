@@ -42,7 +42,7 @@ def start_work_session():
     current_session_counter += 1
     session_active = True  # Session en cours
     TIMER_FILE.write_text(str(start_time))
-    update_session_count()
+    session_count_label.config(text=f"Current session : {current_session_counter}")
     work_button.config(state=ttkb.DISABLED)
     stop_button.config(state=ttkb.NORMAL)
     update_timer()  # Premier appel explicite ici
@@ -58,6 +58,7 @@ def stop_work_session():
     selected_task = task_combobox.get()
     save_session(start_time, end_time, work_duration, selected_category, selected_task, is_billable)
     update_status(f"Session saved : {selected_task} ({selected_category})")
+    update_daily_work_hours()  # Mettre à jour les heures de travail quotidiennes
     work_button.config(state=ttkb.NORMAL)
     stop_button.config(state=ttkb.DISABLED)
     break_duration = work_duration / 5
@@ -109,7 +110,9 @@ def update_status(message):
 
 def update_session_count():
     session_count_label.config(text=f"Current Sessions: {current_session_counter}")
+    update_daily_work_hours()
 
+def update_daily_work_hours():
     sessions = load_sessions()
     today = datetime.now().strftime('%Y-%m-%d')
     daily_duration = sum(session['duration'] for session in sessions if session['start_time'].startswith(today))
@@ -118,6 +121,20 @@ def update_session_count():
     minutes, _ = divmod(remainder, 60)
 
     daily_hours_label.config(text=f"Today's work: {int(hours)}h {int(minutes)}m")
+
+def initialize_app_data():
+    """Initialise les données de l'application au démarrage"""
+    global current_session_counter
+    
+    # Calculer le nombre de sessions aujourd'hui
+    sessions = load_sessions()
+    today = datetime.now().strftime('%Y-%m-%d')
+    daily_sessions = [session for session in sessions if session['start_time'].startswith(today)]
+    current_session_counter = len(daily_sessions)
+    
+    # Mettre à jour l'affichage
+    session_count_label.config(text=f"Current session : {current_session_counter}")
+    update_daily_work_hours()
 
 root = ttkb.Window(themename=app_settings.get("theme", "superhero"))
 root.title("FlowModoro")
@@ -208,6 +225,9 @@ def check_for_inactivity():
     root.after(600000, check_for_inactivity)  # 10 minutes
 
 check_for_inactivity()
+
+# Initialiser les données de l'application au démarrage
+initialize_app_data()
 
 # Clean up menu bar process and timer file when GUI is closed
 def on_app_close():
