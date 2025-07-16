@@ -5,3 +5,4 @@ tasks.json
 __pycache__
 flow.py
 prés_loom.txt
+settings.json
