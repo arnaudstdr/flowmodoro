@@ -1,6 +1,6 @@
 {
   "sound_enabled": true,
-  "pushover_enabled": false,
+  "pushover_enabled": true,
   "theme": "superhero",
   "font_size": 46,
   "reminder_delay": 30,
