@@ -9,7 +9,7 @@ PUSHOVER_API_TOKEN = os.getenv('PUSHOVER_API_TOKEN')
 settings_file = "settings.json"
 session_file = "sessions.json"
 task_file = "tasks.json"
-categories = ["Formation 📚", "Pro 💼", "Perso🏠"]
+categories = ["Formation 📚", "Pro 💼", "Bénévolat 🤝", "Perso 🏠"]
 
 def load_settings():
     try:
